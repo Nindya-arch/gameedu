@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Petualangan Energi Super ⚡</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Fredoka', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        danger: '#EF4444',
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Styles & Layout */
+        body {
+            font-family: 'Fredoka', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #e2e8f0;
+            transition: background-color 0.5s ease;
+        }
+
+        .dark body { background-color: #0f172a; }
+
+        /* Mobile App Frame to keep things neat */
+        #app-frame {
+            width: 100%;
+            max-width: 450px;
+            height: 100dvh;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 0 rgba(0,0,0,0);
+            padding-top: env(safe-area-inset-top); /* Mencegah tertutup notch HP */
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        .dark #app-frame {
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+        }
+
+        @media (min-width: 768px) {
+            #app-frame {
+                height: 90vh;
+                border-radius: 2.5rem;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+                border: 8px solid #ffffff;
+            }
+            .dark #app-frame { border-color: #1e293b; }
+        }
+
+        /* Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+        
+        .dark .glass {
+            background: rgba(30, 41, 59, 0.85);
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        /* Scroll Area */
+        .screens-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+            z-index: 10;
+            scroll-behavior: smooth;
+            padding-top: 10px; /* Tambahan ruang nafas atas */
+        }
+        
+        /* Hide scrollbar for clean app look */
+        .screens-wrapper::-webkit-scrollbar { width: 0px; background: transparent; }
+
+        .screen-container {
+            display: none;
+            width: 100%;
+            min-height: 100%;
+            padding: 1.5rem;
+            padding-bottom: 6rem;
+            flex-direction: column;
+        }
+        .screen-container.active {
+            display: flex;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        /* Utilities */
+        .btn-3d { transition: all 0.1s ease; position: relative; }
+        .btn-3d:active { transform: translateY(4px); box-shadow: 0 0px 0 0 #000 !important; }
+
+        .bg-moving {
+            position: absolute; top: -50%; left: -50%; right: -50%; bottom: -50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 2px, transparent 2px);
+            background-size: 50px 50px;
+            animation: moveBg 20s linear infinite; z-index: 0; opacity: 0.5; pointer-events: none;
+        }
+        
+        #confetti-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 100; overflow: hidden;
+        }
+
+        .level-path { width: 6px; background: #cbd5e1; height: 50px; margin: 0 auto; border-radius: 3px; }
+        .level-path.active { background: #10B981; box-shadow: 0 0 10px rgba(16,185,129,0.5); }
+        .confetti-piece { position: absolute; width: 10px; height: 10px; background: #f00; animation: fall linear forwards; }
+
+        @keyframes moveBg { 0% { transform: rotate(0deg) translate(0, 0); } 100% { transform: rotate(360deg) translate(50px, 50px); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-8px); } 100% { transform: translateY(0px); } }
+        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        .shake-effect { animation: shake 0.4s; }
+    </style>
+</head>
+<body>
+
+    <!-- Frame Aplikasi Mobile -->
+    <div id="app-frame" class="text-gray-800 dark:text-gray-100 transition-colors duration-300">
+        
+        <div class="bg-moving"></div>
+
+        <!-- AUDIO SYSTEM (Hidden) -->
+        <button id="init-audio" class="hidden">Init Audio</button>
+
+        <!-- TOP BAR (Global UI) -->
+        <div id="top-bar" class="absolute top-0 left-0 right-0 z-40 p-4 flex justify-between items-center hidden glass rounded-b-3xl mx-2 mt-2">
+            <button onclick="toggleDarkMode()" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xl shadow-md btn-3d shadow-[0_4px_0_#9ca3af] dark:shadow-[0_4px_0_#374151]">
+                <i id="theme-icon" class="fas fa-moon text-gray-600 dark:text-yellow-400"></i>
+            </button>
+            <div class="flex items-center space-x-3 bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-inner border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center text-accent font-bold"><i class="fas fa-star mr-1"></i> <span id="global-score">0</span></div>
+                <div class="w-px h-4 bg-gray-300"></div>
+                <div class="flex items-center text-danger font-bold"><i class="fas fa-heart mr-1"></i> <span id="global-lives">3</span></div>
+            </div>
+        </div>
+
+        <!-- SCROLLABLE SCREENS AREA -->
+        <div class="screens-wrapper">
+
+            <!-- SCREEN: LOADING -->
+            <div id="screen-loading" class="screen-container active items-center pb-0">
+                <div class="text-center w-full my-auto">
+                    <div class="w-24 h-24 bg-primary rounded-full flex items-center justify-center border-4 border-white shadow-[0_0_20px_rgba(79,70,229,0.5)] animate-pulse mx-auto mb-4">
+                        <i class="fas fa-bolt text-5xl text-yellow-300"></i>
+                    </div>
+                    <h1 class="text-3xl font-bold text-primary dark:text-blue-400 mb-2">Petualangan Energi</h1>
+                    <p class="text-gray-600 dark:text-gray-300 font-medium mb-6 animate-pulse">Menyiapkan Lab...</p>
+                    <div class="w-48 h-3 bg-gray-200 rounded-full mx-auto overflow-hidden">
+                        <div id="loading-bar" class="h-full bg-gradient-to-r from-primary to-accent w-full animate-pulse"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN: HOME -->
+            <div id="screen-home" class="screen-container items-center text-center">
+                <div class="glass p-8 rounded-[2rem] w-full flex flex-col items-center justify-center shadow-xl relative my-auto mt-10">
+                    <i class="fas fa-atom absolute top-6 left-6 text-3xl text-blue-400 opacity-50 animate-float"></i>
+                    <i class="fas fa-leaf absolute bottom-6 right-6 text-3xl text-green-400 opacity-50 animate-float" style="animation-delay: 1s;"></i>
+                    
+                    <div class="w-28 h-28 bg-gradient-to-br from-yellow-300 to-orange-500 rounded-full flex items-center justify-center border-4 border-white shadow-[0_0_20px_rgba(245,158,11,0.5)] mx-auto mb-6">
+                        <i class="fas fa-bolt text-6xl text-white"></i>
+                    </div>
+                    
+                    <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-600 dark:from-blue-400 dark:to-purple-400 mb-2 drop-shadow-sm leading-tight">
+                        Petualangan<br>Energi Super
+                    </h1>
+                    <p class="text-sm text-gray-500 dark:text-gray-300 mb-8 font-medium">IPAS Kelas 4 SD - Kurikulum Merdeka</p>
+                    
+                    <button onclick="goToMap()" class="w-full bg-gradient-to-b from-green-400 to-green-600 text-white text-2xl font-bold py-4 rounded-2xl shadow-[0_6px_0_#166534] btn-3d mb-5">
+                        <i class="fas fa-play mr-2"></i> MAIN
+                    </button>
+
+                    <div class="grid grid-cols-2 gap-3 w-full">
+                        <button onclick="showStats()" class="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 py-3 rounded-xl font-bold shadow-[0_4px_0_#93c5fd] dark:shadow-[0_4px_0_#1e3a8a] btn-3d text-sm">
+                            <i class="fas fa-trophy mr-1"></i> Prestasi
+                        </button>
+                        <button onclick="resetProgress()" class="bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 py-3 rounded-xl font-bold shadow-[0_4px_0_#fca5a5] dark:shadow-[0_4px_0_#7f1d1d] btn-3d text-sm">
+                            <i class="fas fa-undo mr-1"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN: MAP -->
+            <div id="screen-map" class="screen-container pt-24">
+                <div class="glass rounded-2xl py-3 shadow-sm mb-6 text-center">
+                    <h2 class="text-2xl font-bold text-primary dark:text-blue-400">Peta Misi</h2>
+                </div>
+                
+                <div class="relative flex flex-col items-center w-full" id="map-container">
+                    <!-- Rendered by JS -->
+                </div>
+                
+                <button onclick="goHome()" class="mt-8 bg-gray-500 text-white py-3 px-6 rounded-xl font-bold shadow-[0_4px_0_#374151] btn-3d mx-auto block">
+                    <i class="fas fa-home mr-2"></i> Kembali ke Menu
+                </button>
+            </div>
+
+            <!-- SCREEN: MATERIAL -->
+            <div id="screen-material" class="screen-container pt-24">
+                <div class="glass rounded-[2rem] p-6 shadow-xl relative mt-16 mb-auto">
+                    <div id="material-icon" class="w-24 h-24 bg-gradient-to-br from-blue-400 to-primary rounded-3xl flex items-center justify-center text-4xl text-white shadow-xl mx-auto mb-4 absolute -top-12 left-1/2 transform -translate-x-1/2 border-4 border-white dark:border-gray-800">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    
+                    <h2 id="material-title" class="text-2xl font-bold text-center mt-14 mb-4 text-gray-800 dark:text-white">Judul Materi</h2>
+                    
+                    <div id="material-content" class="text-sm space-y-3 text-gray-700 dark:text-gray-200 leading-relaxed font-medium">
+                        <!-- Content here -->
+                    </div>
+                    
+                    <button id="btn-start-level" class="w-full mt-8 bg-gradient-to-b from-primary to-blue-700 text-white text-xl font-bold py-4 rounded-xl shadow-[0_6px_0_#1e3a8a] btn-3d">
+                        Mulai Eksperimen! <i class="fas fa-rocket ml-2"></i>
+                    </button>
+                    <button onclick="goToMap()" class="w-full mt-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white text-lg font-bold py-3 rounded-xl shadow-[0_4px_0_#9ca3af] dark:shadow-[0_4px_0_#374151] btn-3d">
+                        Batal
+                    </button>
+                </div>
+            </div>
+
+            <!-- SCREEN: GAMEPLAY -->
+            <div id="screen-gameplay" class="screen-container pt-8 md:pt-10">
+                
+                <!-- Game Header -->
+                <div class="glass rounded-2xl p-4 mb-4 flex justify-between items-center shadow-sm">
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Soal <span id="game-round" class="text-lg text-primary dark:text-blue-400">1</span>/10</p>
+                        <div class="flex space-x-1 mt-1 text-danger text-sm" id="game-lives-container">
+                            <i class="fas fa-heart"></i><i class="fas fa-heart"></i><i class="fas fa-heart"></i>
+                        </div>
+                    </div>
+                    <!-- Timer Circle -->
+                    <div class="text-center w-16 h-16 rounded-full flex items-center justify-center relative bg-white dark:bg-gray-800 shadow-inner">
+                        <svg class="absolute top-0 left-0 w-full h-full transform -rotate-90" viewBox="0 0 64 64">
+                            <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="4" fill="transparent" class="text-gray-200 dark:text-gray-700"></circle>
+                            <circle id="timer-circle" cx="32" cy="32" r="28" stroke="currentColor" stroke-width="4" fill="transparent" stroke-dasharray="176" stroke-dashoffset="0" class="text-secondary transition-all duration-1000 linear"></circle>
+                        </svg>
+                        <span id="game-timer" class="text-xl font-extrabold relative z-10 text-gray-700 dark:text-gray-200">20</span>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Skor</p>
+                        <p id="game-score" class="text-2xl font-extrabold text-accent">0</p>
+                        <p id="game-combo" class="text-[10px] font-bold text-primary hidden bg-blue-100 px-2 rounded-full animate-bounce mt-1">Combo!</p>
+                    </div>
+                </div>
+
+                <!-- Question Box -->
+                <div id="question-box" class="glass rounded-3xl p-6 mb-5 shadow-md min-h-[140px] flex items-center justify-center text-center transition-transform duration-300 border border-gray-100 dark:border-gray-700">
+                    <h3 id="game-question" class="text-lg md:text-xl font-bold text-gray-800 dark:text-white leading-snug">
+                        Pertanyaan akan muncul di sini?
+                    </h3>
+                </div>
+
+                <!-- Options -->
+                <div id="game-options" class="flex flex-col gap-3 mb-6 w-full">
+                    <!-- Rendered via JS -->
+                </div>
+
+                <!-- Tools -->
+                <div class="flex justify-between gap-3 mt-auto">
+                    <button onclick="useHint()" id="btn-hint" class="flex-1 bg-yellow-400 text-yellow-900 py-3 rounded-xl font-bold shadow-[0_4px_0_#b45309] btn-3d text-sm">
+                        <i class="fas fa-lightbulb mr-1"></i> Bantuan (20)
+                    </button>
+                    <button onclick="pauseGame()" class="flex-1 bg-gray-400 text-white py-3 rounded-xl font-bold shadow-[0_4px_0_#4b5563] btn-3d text-sm">
+                        <i class="fas fa-pause mr-1"></i> Jeda
+                    </button>
+                </div>
+            </div>
+
+            <!-- SCREEN: RESULT -->
+            <div id="screen-result" class="screen-container items-center text-center">
+                <div class="glass p-8 rounded-[2rem] w-full flex flex-col items-center justify-center shadow-xl relative my-auto mt-20">
+                    
+                    <div id="result-icon-container" class="w-28 h-28 rounded-full flex items-center justify-center mb-6 z-10 border-4 border-white shadow-xl absolute -top-14">
+                        <i id="result-icon" class="fas fa-star text-5xl text-white"></i>
+                    </div>
+                    
+                    <h2 id="result-title" class="text-3xl font-extrabold mb-2 drop-shadow-sm mt-8">Level Selesai!</h2>
+                    <p id="result-desc" class="text-sm font-medium text-gray-600 dark:text-gray-300 mb-6">Kamu hebat sekali!</p>
+                    
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 w-full mb-6 shadow-inner border border-gray-100 dark:border-gray-700">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-bold text-gray-500 text-sm">Skor Diperoleh:</span>
+                            <span id="result-score" class="text-2xl font-bold text-accent">+100</span>
+                        </div>
+                        <div class="flex justify-between items-center" id="result-badge-container">
+                            <span class="font-bold text-gray-500 text-sm">Badge Baru:</span>
+                            <span id="result-badge" class="px-3 py-1 bg-gradient-to-r from-yellow-300 to-yellow-500 text-white rounded-full font-bold text-xs shadow-sm">
+                                <i class="fas fa-medal"></i> Ahli Gaya
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-3 w-full">
+                        <button id="btn-next-level" class="w-full bg-secondary text-white py-4 rounded-xl font-bold shadow-[0_4px_0_#065f46] btn-3d text-lg">
+                            Lanjut <i class="fas fa-arrow-right ml-1"></i>
+                        </button>
+                        <button onclick="goToMap()" class="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white py-3 rounded-xl font-bold shadow-[0_4px_0_#9ca3af] dark:shadow-[0_4px_0_#374151] btn-3d">
+                            <i class="fas fa-map mr-1"></i> Kembali ke Peta
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN: CERTIFICATE -->
+            <div id="screen-certificate" class="screen-container items-center text-center">
+                <div class="bg-gradient-to-br from-yellow-100 to-yellow-300 dark:from-yellow-700 dark:to-yellow-900 p-2 rounded-3xl w-full shadow-2xl relative my-auto mt-16">
+                    <i class="fas fa-award absolute -top-8 -right-4 text-6xl text-yellow-500 drop-shadow-lg transform rotate-12 z-20"></i>
+                    
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl border-2 border-yellow-400 border-dashed">
+                        
+                        <h2 class="text-lg font-bold text-gray-500 uppercase tracking-widest mb-2">Sertifikat Penghargaan</h2>
+                        <div class="w-full h-1 bg-yellow-400 mb-6"></div>
+                        
+                        <p class="text-sm mb-2 text-gray-600 dark:text-gray-300">Diberikan kepada:</p>
+                        <h1 class="text-3xl font-extrabold text-primary mb-4 font-serif leading-tight">MASTER SAINS<br>CILIK</h1>
+                        <p class="text-xs text-gray-600 dark:text-gray-300 mb-8 font-medium leading-relaxed">
+                            Telah berhasil menyelesaikan semua misi dan mempelajari Gaya & Energi dengan sangat luar biasa!
+                        </p>
+                        
+                        <div class="flex justify-between items-end mt-4">
+                            <div class="text-center">
+                                <i class="fas fa-robot text-3xl text-blue-500 mb-1"></i>
+                                <p class="text-[10px] font-bold border-t border-gray-400 pt-1 mt-1">Milo Robot</p>
+                            </div>
+                            <div class="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg border-4 border-white text-center">
+                                <span class="font-bold text-white text-[10px] leading-tight">100%<br>LULUS</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button onclick="goHome()" class="mt-8 bg-gradient-to-b from-primary to-blue-700 text-white text-lg font-bold py-3 px-8 rounded-xl shadow-[0_6px_0_#1e3a8a] btn-3d animate-bounce">
+                    <i class="fas fa-home mr-2"></i> Main Lagi
+                </button>
+            </div>
+            
+        </div> <!-- End Screens Wrapper -->
+
+        <!-- MODAL: PAUSE -->
+        <div id="modal-pause" class="absolute inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl w-[85%] text-center shadow-2xl transform transition-transform scale-95">
+                <i class="fas fa-pause-circle text-6xl text-primary mb-4 animate-pulse"></i>
+                <h2 class="text-2xl font-bold mb-6">Game Dijeda</h2>
+                <div class="space-y-3">
+                    <button onclick="resumeGame()" class="w-full bg-secondary text-white py-3 rounded-xl font-bold shadow-[0_4px_0_#065f46] btn-3d text-lg">
+                        <i class="fas fa-play mr-2"></i> Lanjutkan
+                    </button>
+                    <button onclick="quitGame()" class="w-full bg-danger text-white py-3 rounded-xl font-bold shadow-[0_4px_0_#991b1b] btn-3d text-lg">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Keluar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: STATS -->
+        <div id="modal-stats" class="absolute inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl w-[85%] shadow-2xl transform transition-transform scale-95">
+                <h2 class="text-2xl font-bold mb-4 text-center text-primary dark:text-blue-400"><i class="fas fa-trophy"></i> Prestasi Kamu</h2>
+                <div class="bg-gray-100 dark:bg-gray-700 rounded-xl p-4 mb-5 space-y-3 text-sm font-medium">
+                    <div class="flex justify-between border-b border-gray-200 dark:border-gray-600 pb-2">
+                        <span class="text-gray-600 dark:text-gray-300">Skor Total:</span> 
+                        <span id="stat-score" class="text-accent font-bold text-lg">0</span>
+                    </div>
+                    <div class="flex justify-between border-b border-gray-200 dark:border-gray-600 pb-2">
+                        <span class="text-gray-600 dark:text-gray-300">Nyawa Maksimal:</span> 
+                        <span id="stat-lives" class="text-danger font-bold text-lg">3</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-300">Level Terbuka:</span> 
+                        <span id="stat-level" class="text-secondary font-bold text-lg">1</span>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <h3 class="font-bold text-sm text-gray-500 mb-2">Daftar Badge:</h3>
+                    <div id="stat-badges" class="flex flex-wrap gap-2">
+                        <!-- Badges -->
+                    </div>
+                </div>
+                <button onclick="closeStats()" class="w-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white py-3 rounded-xl font-bold shadow-[0_4px_0_#9ca3af] dark:shadow-[0_4px_0_#374151] btn-3d">
+                    Tutup
+                </button>
+            </div>
+        </div>
+
+        <!-- MILO MASKOT -->
+        <div id="milo" class="absolute bottom-6 right-4 z-50 flex items-end space-x-2 hidden transition-all duration-300 transform translate-y-10 opacity-0 pointer-events-none">
+            <div class="bg-white dark:bg-gray-800 p-3 rounded-2xl rounded-br-none shadow-xl border-2 border-primary max-w-[180px] text-xs font-medium animate-float text-gray-800 dark:text-gray-100">
+                <span id="milo-text">Halo!</span>
+            </div>
+            <div class="w-14 h-14 bg-blue-500 rounded-full flex items-center justify-center border-4 border-white shadow-lg animate-float" style="animation-delay: 0.2s;">
+                <i id="milo-icon" class="fas fa-robot text-2xl text-white"></i>
+            </div>
+        </div>
+
+        <div id="confetti-container"></div>
+
+    </div> <!-- End App Frame -->
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- DATA BUNDLE ---
+        const LEVELS = [
+            {
+                id: 1, title: "Desa Gaya", icon: "fa-running", color: "from-blue-400 to-blue-600", shadow: "shadow-blue-500",
+                badge: "Ahli Gaya 🏃",
+                material: {
+                    title: "Apa itu Gaya?",
+                    content: `
+                        <p><strong>Gaya</strong> adalah tarikan atau dorongan yang diberikan pada suatu benda.</p>
+                        <ul class="list-disc pl-5 mt-2 space-y-1">
+                            <li><strong>Mendorong meja:</strong> Gaya dorong.</li>
+                            <li><strong>Menarik tambang:</strong> Gaya tarik.</li>
+                        </ul>
+                        <div class="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-xl mt-3 text-xs text-blue-900 dark:text-blue-100">
+                            <i class="fas fa-lightbulb text-yellow-500"></i> Fakta Milo: "Gaya gesek membuat kita tidak terpeleset saat berjalan lho!"
+                        </div>
+                    `
+                }
+            },
+            {
+                id: 2, title: "Kota Energi", icon: "fa-bolt", color: "from-yellow-400 to-orange-500", shadow: "shadow-orange-500",
+                badge: "Penjelajah Energi ⚡",
+                material: {
+                    title: "Mengenal Energi",
+                    content: `
+                        <p><strong>Energi</strong> adalah kemampuan untuk melakukan usaha atau kerja. Kita butuh energi untuk hidup!</p>
+                        <ul class="list-disc pl-5 mt-2 space-y-1">
+                            <li><strong>Energi Cahaya:</strong> Dari matahari atau lampu.</li>
+                            <li><strong>Energi Listrik:</strong> Menyalakan TV dan HP.</li>
+                        </ul>
+                        <div class="bg-yellow-100 dark:bg-yellow-900/50 p-3 rounded-xl mt-3 text-xs text-yellow-900 dark:text-yellow-100">
+                            <i class="fas fa-lightbulb text-yellow-500"></i> Fakta Milo: "Makanan yang kita makan adalah sumber energi utama bagi tubuh kita!"
+                        </div>
+                    `
+                }
+            },
+            {
+                id: 3, title: "Hutan Alam", icon: "fa-leaf", color: "from-green-400 to-emerald-600", shadow: "shadow-green-500",
+                badge: "Penjaga Alam 🌿",
+                material: {
+                    title: "Energi dari Alam",
+                    content: `
+                        <p>Alam menyediakan energi yang tidak akan pernah habis (<strong>Energi Alternatif</strong>).</p>
+                        <ul class="list-disc pl-5 mt-2 space-y-1">
+                            <li><strong>Matahari:</strong> Sumber energi terbesar.</li>
+                            <li><strong>Air:</strong> Digunakan di PLTA.</li>
+                        </ul>
+                        <div class="bg-green-100 dark:bg-green-900/50 p-3 rounded-xl mt-3 text-xs text-green-900 dark:text-green-100">
+                            <i class="fas fa-lightbulb text-yellow-500"></i> Fakta Milo: "Menggunakan energi matahari membantu bumi bebas dari asap polusi!"
+                        </div>
+                    `
+                }
+            },
+            {
+                id: 4, title: "Markas Ilmuwan", icon: "fa-rocket", color: "from-purple-500 to-indigo-600", shadow: "shadow-purple-500",
+                badge: "Ilmuwan Cilik 🚀",
+                material: {
+                    title: "Perubahan Energi",
+                    content: `
+                        <p>Energi tidak bisa diciptakan, tapi bisa <strong>diubah bentuknya</strong>!</p>
+                        <ul class="list-disc pl-5 mt-2 space-y-1">
+                            <li><strong>Listrik -> Gerak:</strong> Kipas angin.</li>
+                            <li><strong>Listrik -> Panas:</strong> Setrika.</li>
+                        </ul>
+                        <div class="bg-purple-100 dark:bg-purple-900/50 p-3 rounded-xl mt-3 text-xs text-purple-900 dark:text-purple-100">
+                            <i class="fas fa-lightbulb text-yellow-500"></i> Fakta Milo: "Baterai di HP mengubah energi kimia menjadi listrik agar menyala!"
+                        </div>
+                    `
+                }
+            }
+        ];
+
+        // 40 Soal Sampel Berkualitas
+        const QUESTION_BANK = {
+            1: [ 
+                { q: "Apa yang dimaksud dengan gaya dalam IPA?", a: "Tarikan atau dorongan", opt: ["Gerakan cepat", "Tarikan atau dorongan", "Energi panas", "Sumber cahaya"] },
+                { q: "Saat kamu menendang bola, gaya apa yang kamu berikan?", a: "Gaya dorong", opt: ["Gaya tarik", "Gaya dorong", "Gaya gravitasi", "Gaya magnet"] },
+                { q: "Mengapa buah apel jatuh dari pohon ke tanah?", a: "Karena gravitasi bumi", opt: ["Karena ditiup angin", "Karena gravitasi bumi", "Karena gaya gesek", "Karena pohon mendorongnya"] },
+                { q: "Gaya yang terjadi saat rem sepeda ditekan adalah...", a: "Gaya gesek", opt: ["Gaya pegas", "Gaya magnet", "Gaya gesek", "Gaya gravitasi"] },
+                { q: "Bermain ketapel menggunakan prinsip gaya...", a: "Gaya pegas", opt: ["Gaya gesek", "Gaya magnet", "Gaya pegas", "Gaya listrik"] },
+                { q: "Benda yang dapat menarik paku besi adalah...", a: "Magnet", opt: ["Plastik", "Kayu", "Magnet", "Karet"] },
+                { q: "Gaya dapat mengubah... benda.", a: "Bentuk dan arah", opt: ["Warna", "Bentuk dan arah", "Bau", "Rasa"] },
+                { q: "Permukaan ban mobil dibuat kasar agar...", a: "Gaya gesek membesar", opt: ["Mobil terlihat bagus", "Gaya gesek mengecil", "Gaya gesek membesar", "Mobil melayang"] },
+                { q: "Kuda menarik delman adalah contoh dari...", a: "Gaya tarik", opt: ["Gaya dorong", "Gaya tarik", "Gaya pegas", "Gaya gesek"] },
+                { q: "Gaya otot digunakan manusia saat...", a: "Mengangkat meja", opt: ["Menonton TV", "Mendengar musik", "Tidur siang", "Mengangkat meja"] }
+            ],
+            2: [ 
+                { q: "Sumber energi terbesar bagi bumi adalah...", a: "Matahari", opt: ["Bulan", "Bintang", "Matahari", "Listrik"] },
+                { q: "Energi yang dihasilkan oleh alat musik gitar adalah...", a: "Energi bunyi", opt: ["Energi panas", "Energi cahaya", "Energi bunyi", "Energi gerak"] },
+                { q: "Senter yang menyala menghasilkan energi...", a: "Cahaya", opt: ["Cahaya", "Gerak", "Bunyi", "Kimia"] },
+                { q: "Makanan yang kita makan menjadi sumber energi... bagi tubuh.", a: "Kimia", opt: ["Listrik", "Cahaya", "Kimia", "Panas"] },
+                { q: "Api unggun bermanfaat karena menghasilkan energi...", a: "Panas dan cahaya", opt: ["Gerak", "Bunyi", "Listrik", "Panas dan cahaya"] },
+                { q: "Alat yang membutuhkan energi listrik untuk menyala adalah...", a: "Televisi", opt: ["Gitar", "Televisi", "Sepeda", "Lilin"] },
+                { q: "Baterai menyimpan energi dalam bentuk...", a: "Energi kimia", opt: ["Energi gerak", "Energi bunyi", "Energi kimia", "Energi panas"] },
+                { q: "Bunyi petir terdengar sangat keras karena memiliki...", a: "Energi bunyi yang besar", opt: ["Energi bunyi yang besar", "Energi cahaya", "Energi kimia", "Energi gesek"] },
+                { q: "Energi panas sering juga disebut...", a: "Kalor", opt: ["Kalor", "Cahaya", "Listrik", "Gaya"] },
+                { q: "Untuk menjemur pakaian, kita memanfaatkan energi dari...", a: "Matahari", opt: ["Lampu", "Kipas Angin", "Matahari", "Api unggun"] }
+            ],
+            3: [ 
+                { q: "Energi alternatif digunakan untuk menggantikan...", a: "Bahan bakar minyak", opt: ["Matahari", "Bahan bakar minyak", "Air", "Angin"] },
+                { q: "Kincir angin raksasa menghasilkan listrik dari energi...", a: "Angin", opt: ["Air", "Matahari", "Angin", "Batu bara"] },
+                { q: "Alat untuk menangkap energi matahari disebut...", a: "Panel surya", opt: ["Kincir angin", "Dinamo", "Panel surya", "Baterai"] },
+                { q: "PLTA menghasilkan listrik dengan memanfaatkan derasnya...", a: "Aliran air", opt: ["Aliran air", "Hembusan angin", "Cahaya matahari", "Panas bumi"] },
+                { q: "Salah satu keuntungan energi alternatif adalah...", a: "Tidak mencemari lingkungan", opt: ["Cepat habis", "Sangat mahal", "Tidak mencemari lingkungan", "Berbahaya"] },
+                { q: "Gas yang dihasilkan dari kotoran hewan untuk energi disebut...", a: "Biogas", opt: ["Elpiji", "Biogas", "Bensin", "Solar"] },
+                { q: "Minyak bumi dan batu bara termasuk energi yang...", a: "Bisa habis", opt: ["Bisa habis", "Tidak bisa habis", "Selalu ada", "Berasal dari matahari"] },
+                { q: "Cara mudah menghemat energi di rumah adalah...", a: "Mematikan lampu siang hari", opt: ["Menyalakan TV terus", "Membiarkan keran air mengalir", "Mematikan lampu siang hari", "Membuka pintu kulkas lama"] },
+                { q: "Panas bumi disebut juga energi...", a: "Geotermal", opt: ["Geotermal", "Biomassa", "Hidro", "Solar"] },
+                { q: "Bahan bakar untuk mobil biasanya berasal dari...", a: "Minyak bumi", opt: ["Air", "Minyak bumi", "Kayu bakar", "Angin"] }
+            ],
+            4: [ 
+                { q: "Pada kipas angin, energi listrik diubah menjadi energi...", a: "Gerak", opt: ["Panas", "Cahaya", "Gerak", "Bunyi"] },
+                { q: "Setrika mengubah energi listrik menjadi energi...", a: "Panas", opt: ["Panas", "Dingin", "Gerak", "Suara"] },
+                { q: "Radio mengubah energi listrik menjadi energi...", a: "Bunyi", opt: ["Bunyi", "Cahaya", "Gerak", "Panas"] },
+                { q: "Panel surya mengubah energi matahari menjadi...", a: "Energi listrik", opt: ["Energi gerak", "Energi kimia", "Energi listrik", "Energi bunyi"] },
+                { q: "Saat lampu menyala, terjadi perubahan energi listrik menjadi...", a: "Cahaya dan panas", opt: ["Cahaya dan panas", "Gerak dan bunyi", "Kimia dan gerak", "Suara saja"] },
+                { q: "Dinamo sepeda mengubah energi gerak menjadi energi...", a: "Listrik", opt: ["Panas", "Listrik", "Kimia", "Gravitasi"] },
+                { q: "Hair dryer (pengering rambut) mengubah listrik menjadi...", a: "Panas dan gerak", opt: ["Cahaya", "Panas dan gerak", "Kimia", "Dingin"] },
+                { q: "Saat aki mobil digunakan untuk menyalakan mesin, terjadi perubahan dari energi kimia ke...", a: "Listrik", opt: ["Listrik", "Matahari", "Angin", "Air"] },
+                { q: "Televisi mengubah energi listrik menjadi energi...", a: "Cahaya dan bunyi", opt: ["Panas saja", "Cahaya dan bunyi", "Gerak saja", "Kimia"] },
+                { q: "Rice cooker bekerja dengan mengubah listrik menjadi...", a: "Panas", opt: ["Panas", "Gerak", "Cahaya", "Angin"] }
+            ]
+        };
+
+        // --- AUDIO SYSTEM ---
+        const audio = {
+            ctx: null,
+            init: function() {
+                if (!this.ctx) { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+                if (this.ctx.state === 'suspended') { this.ctx.resume(); }
+            },
+            playTone: function(freq, type, duration, vol = 0.1) {
+                if(!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+            click: function() { this.playTone(600, 'sine', 0.1, 0.1); },
+            correct: function() { this.playTone(600, 'sine', 0.1, 0.1); setTimeout(() => this.playTone(800, 'sine', 0.15, 0.1), 100); },
+            wrong: function() { this.playTone(300, 'sawtooth', 0.2, 0.1); setTimeout(() => this.playTone(200, 'sawtooth', 0.3, 0.1), 150); },
+            win: function() { [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => setTimeout(() => this.playTone(f, 'sine', 0.2, 0.1), i * 150)); },
+            lose: function() { [400, 350, 300, 200].forEach((f, i) => setTimeout(() => this.playTone(f, 'square', 0.3, 0.1), i * 200)); }
+        };
+
+        document.body.addEventListener('click', () => audio.init(), { once: true });
+        document.body.addEventListener('touchstart', () => audio.init(), { once: true });
+
+        // --- STATE MANAGEMENT ---
+        let gameState = { unlockedLevel: 1, globalScore: 0, globalLives: 3, badges: [] };
+        let currentLevelIndex = 1, currentQuestions = [], questionIndex = 0, roundScore = 0, combo = 0, timer = 20, timerInterval = null, isPaused = false, currentHintUsed = false;
+
+        function loadState() {
+            try {
+                // Changed key to V2 to ensure clean state and avoid broken old saves
+                const saved = localStorage.getItem('energiGameProgressV2');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    gameState = { ...gameState, ...parsed };
+                    if(!gameState.badges) gameState.badges = [];
+                }
+            } catch (e) { console.error("Load state error", e); }
+            updateTopBar();
+        }
+
+        function saveState() {
+            localStorage.setItem('energiGameProgressV2', JSON.stringify(gameState));
+            updateTopBar();
+        }
+
+        function resetProgress() {
+            audio.click();
+            if(confirm("Yakin ingin mereset progress? Skor dan level akan kembali ke 0!")) {
+                gameState = { unlockedLevel: 1, globalScore: 0, globalLives: 3, badges: [] };
+                saveState();
+                goHome();
+                showMilo("Progress direset! Mari mulai petualangan baru.", "happy");
+            }
+        }
+
+        // --- UI ROUTING ---
+        function hideAllScreens() { document.querySelectorAll('.screen-container').forEach(el => el.classList.remove('active')); }
+
+        function showScreen(id) {
+            hideAllScreens();
+            const screen = document.getElementById(`screen-${id}`);
+            screen.classList.add('active');
+            
+            const topBar = document.getElementById('top-bar');
+            if(id === 'home' || id === 'map' || id === 'material') { topBar.classList.remove('hidden'); } 
+            else { topBar.classList.add('hidden'); }
+            
+            document.querySelector('.screens-wrapper').scrollTo(0,0);
+        }
+
+        window.onload = () => {
+            loadState();
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('theme-icon').classList.replace('fa-moon', 'fa-sun');
+            }
+            setTimeout(() => showScreen('home'), 1500);
+        };
+
+        // --- TOP BAR & THEME ---
+        function updateTopBar() {
+            document.getElementById('global-score').innerText = gameState.globalScore;
+            document.getElementById('global-lives').innerText = gameState.globalLives;
+        }
+
+        function toggleDarkMode() {
+            audio.click();
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            const icon = document.getElementById('theme-icon');
+            if (html.classList.contains('dark')) {
+                localStorage.setItem('theme', 'dark');
+                icon.classList.replace('fa-moon', 'fa-sun');
+            } else {
+                localStorage.setItem('theme', 'light');
+                icon.classList.replace('fa-sun', 'fa-moon');
+            }
+        }
+
+        // Stats Modal
+        function showStats() {
+            audio.click();
+            document.getElementById('stat-score').innerText = gameState.globalScore;
+            document.getElementById('stat-lives').innerText = gameState.globalLives;
+            document.getElementById('stat-level').innerText = gameState.unlockedLevel;
+            
+            const badgesContainer = document.getElementById('stat-badges');
+            if (gameState.badges.length > 0) {
+                badgesContainer.innerHTML = gameState.badges.map(b => `<span class="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-3 py-1 rounded-full text-xs font-bold border border-yellow-300"><i class="fas fa-medal mr-1"></i> ${b}</span>`).join('');
+            } else {
+                badgesContainer.innerHTML = '<span class="text-xs text-gray-500 italic">Belum ada badge. Mainkan level untuk mendapatkannya!</span>';
+            }
+            document.getElementById('modal-stats').classList.remove('hidden');
+        }
+
+        function closeStats() { audio.click(); document.getElementById('modal-stats').classList.add('hidden'); }
+
+        // --- MAP SYSTEM ---
+        function goHome() {
+            audio.click();
+            gameState.globalLives = 3; // Refill lives when returning home to prevent being stuck
+            saveState();
+            showScreen('home');
+            hideMilo();
+        }
+
+        function goToMap() {
+            audio.click();
+            gameState.globalLives = 3; // Auto-refill
+            saveState();
+            renderMap();
+            showScreen('map');
+            showMilo(gameState.unlockedLevel > 1 ? `Kamu di Level ${gameState.unlockedLevel}! Ayo lanjut!` : "Pilih level untuk berpetualang!", "smile");
+        }
+
+        function renderMap() {
+            const container = document.getElementById('map-container');
+            container.innerHTML = '';
+            LEVELS.forEach((level, index) => {
+                const isUnlocked = level.id <= gameState.unlockedLevel;
+                const isCompleted = level.id < gameState.unlockedLevel;
+                
+                const box = document.createElement('div');
+                box.className = `w-full bg-white dark:bg-gray-800 rounded-2xl p-4 flex items-center justify-between mb-0 z-10 transition-transform shadow-md border border-gray-100 dark:border-gray-700 ${isUnlocked ? 'cursor-pointer transform hover:-translate-y-1' : 'opacity-60 bg-gray-100 dark:bg-gray-900'}`;
+                
+                if(isUnlocked) { box.onclick = () => openMaterial(level.id); } 
+                else { box.onclick = () => { audio.wrong(); showMilo("Selesaikan level sebelumnya dulu ya!", "sad"); }; }
+
+                box.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white shadow-lg bg-gradient-to-br ${isUnlocked ? level.color : 'from-gray-400 to-gray-500'} ${isUnlocked ? level.shadow : ''}">
+                            <i class="fas ${isUnlocked ? level.icon : 'fa-lock'}"></i>
+                        </div>
+                        <div class="ml-4 text-left">
+                            <h3 class="text-base font-bold ${isUnlocked ? 'text-gray-800 dark:text-white' : 'text-gray-500'}">Level ${level.id}</h3>
+                            <p class="text-xs font-medium ${isUnlocked ? 'text-gray-500 dark:text-gray-400' : 'text-gray-400'}">${level.title}</p>
+                        </div>
+                    </div>
+                    <div>${isCompleted ? '<i class="fas fa-check-circle text-2xl text-green-500 drop-shadow-sm"></i>' : (isUnlocked ? '<i class="fas fa-play-circle text-2xl text-primary animate-pulse"></i>' : '')}</div>
+                `;
+                container.appendChild(box);
+
+                if(index < LEVELS.length - 1) {
+                    const path = document.createElement('div');
+                    path.className = `level-path ${level.id < gameState.unlockedLevel ? 'active' : ''}`;
+                    container.appendChild(path);
+                }
+            });
+        }
+
+        // --- MATERIAL & GAMEPLAY ---
+        function openMaterial(levelId) {
+            audio.click();
+            currentLevelIndex = levelId;
+            const levelData = LEVELS.find(l => l.id === levelId);
+            
+            document.getElementById('material-title').innerText = levelData.material.title;
+            document.getElementById('material-content').innerHTML = levelData.material.content;
+            
+            const iconContainer = document.getElementById('material-icon');
+            iconContainer.className = `w-24 h-24 bg-gradient-to-br ${levelData.color} rounded-3xl flex items-center justify-center text-4xl text-white shadow-xl mx-auto mb-4 absolute -top-12 left-1/2 transform -translate-x-1/2 border-4 border-white dark:border-gray-800`;
+            iconContainer.innerHTML = `<i class="fas ${levelData.icon}"></i>`;
+            
+            document.getElementById('btn-start-level').onclick = () => startGame(levelId);
+            showScreen('material');
+        }
+
+        function startGame(levelId) {
+            audio.click();
+            // FIX: Auto replenish lives to prevent being stuck and not starting
+            if(gameState.globalLives <= 0) {
+                gameState.globalLives = 3;
+                saveState();
+                showMilo("Aku kasih 3 nyawa baru! Semangat!", "happy");
+            }
+
+            let allQ = [...QUESTION_BANK[levelId]];
+            allQ.sort(() => Math.random() - 0.5);
+            currentQuestions = allQ.slice(0, 10);
+            
+            questionIndex = 0; roundScore = 0; combo = 0;
+            
+            updateGameHeader();
+            showScreen('gameplay');
+            hideMilo();
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if(questionIndex >= 10) { finishLevel(true); return; }
+
+            isPaused = false; currentHintUsed = false;
+            const qData = currentQuestions[questionIndex];
+            
+            document.getElementById('game-round').innerText = questionIndex + 1;
+            document.getElementById('game-question').innerText = qData.q;
+            document.getElementById('question-box').classList.remove('shake-effect');
+            
+            let options = [...qData.opt];
+            options.sort(() => Math.random() - 0.5);
+            
+            const optContainer = document.getElementById('game-options');
+            optContainer.innerHTML = '';
+            
+            options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left bg-white dark:bg-gray-800 p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-[0_4px_0_#e5e7eb] dark:shadow-[0_4px_0_#374151] hover:border-primary transition-all font-bold text-gray-700 dark:text-gray-200 btn-3d flex items-center min-h-[60px]";
+                btn.innerHTML = `<span class="shrink-0 inline-flex w-8 h-8 rounded-full bg-blue-100 text-primary items-center justify-center mr-3 text-sm">${['A','B','C','D'][idx]}</span> <span>${opt}</span>`;
+                btn.onclick = () => handleAnswer(opt, btn);
+                optContainer.appendChild(btn);
+            });
+
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timer = 20;
+            updateTimerUI();
+            
+            timerInterval = setInterval(() => {
+                if(!isPaused) {
+                    timer--;
+                    updateTimerUI();
+                    if(timer <= 5 && timer > 0) audio.playTone(800, 'sine', 0.1, 0.05);
+                    if(timer <= 0) { clearInterval(timerInterval); handleTimeout(); }
+                }
+            }, 1000);
+        }
+
+        function updateTimerUI() {
+            document.getElementById('game-timer').innerText = timer;
+            const circle = document.getElementById('timer-circle');
+            const offset = 176 - (176 * timer / 20); // Accurate circumference math for 64px box
+            circle.style.strokeDashoffset = offset;
+            
+            if(timer <= 5) {
+                document.getElementById('game-timer').classList.add('text-danger', 'animate-pulse');
+                circle.classList.add('text-danger'); circle.classList.remove('text-secondary');
+            } else {
+                document.getElementById('game-timer').classList.remove('text-danger', 'animate-pulse');
+                circle.classList.remove('text-danger'); circle.classList.add('text-secondary');
+            }
+        }
+
+        function handleAnswer(selectedOpt, btnElement) {
+            clearInterval(timerInterval);
+            const qData = currentQuestions[questionIndex];
+            const isCorrect = selectedOpt === qData.a;
+
+            const buttons = document.getElementById('game-options').querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true); // prevent double click bugs
+
+            if(isCorrect) {
+                audio.correct();
+                btnElement.classList.replace('border-gray-200', 'border-green-500');
+                btnElement.classList.replace('bg-white', 'bg-green-50');
+                btnElement.classList.replace('dark:bg-gray-800', 'dark:bg-green-900/40');
+                btnElement.classList.add('shadow-[0_4px_0_#22c55e]');
+                
+                combo++;
+                let points = 10 + (combo > 1 ? combo * 2 : 0);
+                roundScore += points; gameState.globalScore += points;
+                
+                createConfetti(); showComboBadge();
+            } else {
+                audio.wrong();
+                btnElement.classList.replace('border-gray-200', 'border-red-500');
+                btnElement.classList.replace('bg-white', 'bg-red-50');
+                btnElement.classList.replace('dark:bg-gray-800', 'dark:bg-red-900/40');
+                btnElement.classList.add('shadow-[0_4px_0_#ef4444]');
+                document.getElementById('question-box').classList.add('shake-effect');
+                
+                buttons.forEach(b => {
+                    if(b.innerText.includes(qData.a)) {
+                        b.classList.replace('border-gray-200', 'border-green-500');
+                        b.classList.add('border-2');
+                    }
+                });
+
+                combo = 0; gameState.globalLives--;
+            }
+
+            updateGameHeader(); saveState();
+            setTimeout(() => {
+                if(gameState.globalLives <= 0) finishLevel(false);
+                else { questionIndex++; loadQuestion(); }
+            }, 1500);
+        }
+
+        function handleTimeout() {
+            audio.wrong(); combo = 0; gameState.globalLives--;
+            document.getElementById('question-box').classList.add('shake-effect');
+            showMilo("Waktu Habis! Ayo lebih cepat!", "sad");
+            
+            const buttons = document.getElementById('game-options').querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true);
+            
+            buttons.forEach(b => {
+                if(b.innerText.includes(currentQuestions[questionIndex].a)) {
+                    b.classList.replace('border-gray-200', 'border-green-500'); b.classList.add('border-2');
+                }
+            });
+
+            updateGameHeader(); saveState();
+            setTimeout(() => {
+                if(gameState.globalLives <= 0) finishLevel(false);
+                else { questionIndex++; loadQuestion(); }
+            }, 1500);
+        }
+
+        function useHint() {
+            if(currentHintUsed || timer <= 0) return;
+            if(gameState.globalScore >= 20) {
+                audio.click();
+                gameState.globalScore -= 20; currentHintUsed = true; updateGameHeader();
+                
+                const qData = currentQuestions[questionIndex];
+                const buttons = document.getElementById('game-options').querySelectorAll('button');
+                
+                let hiddenCount = 0;
+                buttons.forEach(b => {
+                    const text = b.querySelector('span:nth-child(2)').innerText.trim();
+                    if(text !== qData.a && hiddenCount < 2) {
+                        b.style.opacity = '0.3'; b.disabled = true; hiddenCount++;
+                    }
+                });
+                showMilo("2 jawaban salah dihilangkan!", "smile");
+            } else {
+                showMilo("Skor belum cukup! Butuh 20 skor.", "sad");
+            }
+        }
+
+        function updateGameHeader() {
+            document.getElementById('game-score').innerText = roundScore;
+            const livesContainer = document.getElementById('game-lives-container');
+            livesContainer.innerHTML = '';
+            for(let i=0; i<3; i++) {
+                livesContainer.innerHTML += i < gameState.globalLives ? '<i class="fas fa-heart animate-pulse"></i>' : '<i class="far fa-heart text-gray-300"></i>';
+            }
+        }
+
+        function showComboBadge() {
+            if(combo > 1) {
+                const badge = document.getElementById('game-combo');
+                badge.innerText = `Combo x${combo}!`; badge.classList.remove('hidden');
+                setTimeout(() => badge.classList.add('hidden'), 1000);
+            }
+        }
+
+        // --- PAUSE & MODALS ---
+        function pauseGame() { audio.click(); isPaused = true; document.getElementById('modal-pause').classList.remove('hidden'); }
+        function resumeGame() { audio.click(); isPaused = false; document.getElementById('modal-pause').classList.add('hidden'); }
+        function quitGame() { audio.click(); clearInterval(timerInterval); document.getElementById('modal-pause').classList.add('hidden'); goToMap(); }
+
+        // --- RESULT ---
+        function finishLevel(isWin) {
+            clearInterval(timerInterval);
+            showScreen('result');
+            
+            const levelData = LEVELS.find(l => l.id === currentLevelIndex);
+            const nextBtn = document.getElementById('btn-next-level');
+            
+            if(isWin) {
+                audio.win();
+                document.getElementById('result-title').innerText = "Level Selesai!";
+                document.getElementById('result-title').className = "text-3xl font-extrabold mb-2 text-green-500 drop-shadow-sm mt-8";
+                document.getElementById('result-icon').className = "fas fa-star text-5xl text-white";
+                document.getElementById('result-icon-container').className = "w-28 h-28 rounded-full flex items-center justify-center mb-6 z-10 border-4 border-white shadow-xl absolute -top-14 bg-gradient-to-br from-green-400 to-green-600";
+                document.getElementById('result-desc').innerText = "Luar biasa! Kamu berhasil!";
+                document.getElementById('result-score').innerText = "+" + roundScore;
+                
+                let badgeEarned = false;
+                if(!gameState.badges.includes(levelData.badge)) { gameState.badges.push(levelData.badge); badgeEarned = true; }
+                
+                const badgeContainer = document.getElementById('result-badge-container');
+                if(badgeEarned) { badgeContainer.classList.remove('hidden'); document.getElementById('result-badge').innerHTML = `<i class="fas fa-medal"></i> ${levelData.badge}`; } 
+                else { badgeContainer.classList.add('hidden'); }
+
+                if(gameState.unlockedLevel === currentLevelIndex && currentLevelIndex < 4) { gameState.unlockedLevel++; }
+                saveState(); createConfetti();
+                
+                if(currentLevelIndex === 4) {
+                    nextBtn.innerHTML = "Lihat Sertifikat <i class='fas fa-award ml-1'></i>";
+                    nextBtn.onclick = showCertificate;
+                } else {
+                    nextBtn.innerHTML = "Level Selanjutnya <i class='fas fa-arrow-right ml-1'></i>";
+                    nextBtn.onclick = () => openMaterial(currentLevelIndex + 1);
+                }
+            } else {
+                audio.lose();
+                document.getElementById('result-title').innerText = "Game Over!";
+                document.getElementById('result-title').className = "text-3xl font-extrabold mb-2 text-red-500 drop-shadow-sm mt-8";
+                document.getElementById('result-icon').className = "fas fa-heart-broken text-5xl text-white";
+                document.getElementById('result-icon-container').className = "w-28 h-28 rounded-full flex items-center justify-center mb-6 z-10 border-4 border-white shadow-xl absolute -top-14 bg-gradient-to-br from-red-400 to-red-600";
+                document.getElementById('result-desc').innerText = "Jangan menyerah!";
+                document.getElementById('result-score').innerText = roundScore > 0 ? "+" + roundScore : "0";
+                document.getElementById('result-badge-container').classList.add('hidden');
+                
+                nextBtn.innerHTML = "<i class='fas fa-redo mr-1'></i> Coba Lagi";
+                
+                // Give life back so they don't get stuck
+                if(gameState.globalLives <= 0) { gameState.globalLives = 3; saveState(); }
+                
+                nextBtn.onclick = () => startGame(currentLevelIndex);
+            }
+        }
+
+        function showCertificate() {
+            audio.win(); showScreen('certificate'); createConfetti();
+            setInterval(createConfetti, 3000); hideMilo();
+        }
+
+        // --- MILO ---
+        let miloTimeout;
+        function showMilo(text, emotion = "smile") {
+            const milo = document.getElementById('milo'), textEl = document.getElementById('milo-text'), iconEl = document.getElementById('milo-icon');
+            textEl.innerText = text;
+            
+            if(emotion === "happy") iconEl.className = "fas fa-robot text-2xl text-white";
+            else if(emotion === "sad") iconEl.className = "fas fa-robot text-2xl text-gray-300 transform rotate-12";
+            else iconEl.className = "fas fa-robot text-2xl text-white";
+
+            milo.classList.remove('hidden', 'translate-y-10', 'opacity-0');
+            clearTimeout(miloTimeout);
+            miloTimeout = setTimeout(() => hideMilo(), 3000);
+        }
+
+        function hideMilo() {
+            const milo = document.getElementById('milo');
+            milo.classList.add('translate-y-10', 'opacity-0');
+            setTimeout(() => milo.classList.add('hidden'), 300);
+        }
+
+        function createConfetti() {
+            const colors = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6'];
+            const container = document.getElementById('confetti-container');
+            for(let i=0; i<30; i++) {
+                const conf = document.createElement('div');
+                conf.className = 'confetti-piece';
+                conf.style.left = Math.random() * 100 + '%';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.animationDuration = (Math.random() * 2 + 1) + 's';
+                conf.style.animationDelay = (Math.random() * 0.5) + 's';
+                container.appendChild(conf);
+                setTimeout(() => { if(conf.parentNode) conf.parentNode.removeChild(conf); }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>
